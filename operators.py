@@ -30,7 +30,7 @@ def CkNOT(bit_count):
     matrix[pow(2, bit_count+1) - 2][pow(2, bit_count+1) - 1] = 1
     matrix[pow(2, bit_count+1) - 1][pow(2, bit_count+1) - 1] = 0
     matrix[pow(2, bit_count+1) - 1][pow(2, bit_count+1) - 2] = 1
-    print matrix
+    # print matrix
     return matrix
 
 def W(bit_count):
@@ -41,6 +41,6 @@ def W(bit_count):
                 matrix[i][j] = (2.0/pow(2,bit_count)) - 1.0
             else:
                 matrix[i][j] = (2.0/pow(2,bit_count))
-    print '>> W:'
-    print matrix
+    # print '>> W:'
+    # print matrix
     return matrix
