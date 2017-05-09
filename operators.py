@@ -26,7 +26,7 @@ def CNOT():
 
 def CkNOT(bit_count):
     matrix = identity(pow(2,bit_count+1), dtype=int)
-    matrix[pow(2, bit_count+1)-2][pow(2, bit_count+1)-2] = 0
+    matrix[pow(2, bit_count+1) - 2][pow(2, bit_count+1) - 2] = 0
     matrix[pow(2, bit_count+1) - 2][pow(2, bit_count+1) - 1] = 1
     matrix[pow(2, bit_count+1) - 1][pow(2, bit_count+1) - 1] = 0
     matrix[pow(2, bit_count+1) - 1][pow(2, bit_count+1) - 2] = 1
