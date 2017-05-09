@@ -4,9 +4,9 @@
 # We follow the definition of Grover's quantum search algorithm in Explorations in Quantum Computing by William P. Collins, 2011 where Grover's operator is defined as Q=(-H)(I_s)(Hcross)(I_t).
 
 # Library imports
-import time
+import time, itertools
 from numpy import dot, kron, zeros, empty, random
-from math import log, sqrt, floor, pi
+from math import log, sqrt, floor, pi, ceil
 from operators import X, Z, CNOT, CkNOT, W, H
 import collections
 
@@ -288,6 +288,22 @@ def query_substrings_vectors(T, N, M):
 def generate_random_string(length=8, symbols=['a', 'c', 't', 'g']):
     return ''.join([random.choice(symbols) for n in xrange(length)])
 
+def encode_alphabet_symbols(alphabet):
+    # get maximum number of bits needed to encode each symbol in alphabet
+    alphabet_size = len(alphabet)
+    bit_count = int(ceil(log(alphabet_size,2))) + 1
+
+    # assign unique binary encoding for each symbol in alphabet by creating a hash where the key is the symbol and the value is the binary encoding in list format
+    binary_encodings = [x for x in itertools.product([0,1],repeat=(bit_count))]
+    encoding_hash = {}
+    for i in xrange(alphabet_size):
+        encoding_hash[alphabet[i]] = binary_encodings[i]
+
+    encoding_hash['-'] = binary_encodings[alphabet_size]
+
+    # return the resulting hash
+    return encoding_hash
+
 #============================================================================================================
 # Body
 # NOTE: Encode states in vector format notation.
@@ -299,7 +315,9 @@ def generate_random_string(length=8, symbols=['a', 'c', 't', 'g']):
 alphabet = ['a','c','t','g']
 
 # Define binary encoding of alphabet symbols
-symbol_encoding = {'a':[0,0,0],'c':[1,0,0],'t':[0,1,0],'g':[1,1,0], '-':[0,0,1]}
+# symbol_encoding = {'a':[0,0,0],'c':[1,0,0],'t':[0,1,0],'g':[1,1,0], '-':[0,0,1]}
+symbol_encoding = encode_alphabet_symbols(alphabet)
+print 'symbol encoding: ', symbol_encoding
 
 # Compute for size of alphabet
 alphabet_size = len(alphabet)
