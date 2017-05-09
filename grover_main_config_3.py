@@ -4,7 +4,7 @@
 # We follow the definition of Grover's quantum search algorithm in Explorations in Quantum Computing by William P. Collins, 2011 where Grover's operator is defined as Q=(-H)(I_s)(Hcross)(I_t).
 
 # Library imports
-import time, itertools
+import time, itertools, logging
 from numpy import dot, kron, zeros, empty, random
 from math import log, sqrt, floor, pi, ceil
 from operators import X, Z, CNOT, CkNOT, W, H
@@ -28,7 +28,7 @@ def query_substrings(input_register_state):
     return output_register_state
 
 
-def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_register_state):
+def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_register_state, symbol_bit_count):
     # This function corresponds to the application of U_f_prime operator to the superposition state
     # to mark the solution state t by shifting its phase.
 
@@ -63,6 +63,7 @@ def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_registe
     scratch_register_state = substrings_vectors
 
 
+    # Copy substrings into scratch register.
     # Mlog(|E|) CNOT operations: control: substring_register_state as control; target: scratch register (E is read as sigma denoted by Sigma)
     # print '>> Mlog(|E|) CNOT operations on substring and scratch register'
 
@@ -70,22 +71,26 @@ def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_registe
         for symbol_index in xrange(0, M): # 0...M-1 (count of symbols in each substring)
             for bit_index in xrange(0, symbol_bit_count): # 0...log(|E|)-1 (count of bits in each symbol)
 
-                # print 'substring_index: ', substring_index, ' symbol_index: ', symbol_index, ' bit_index: ', bit_index
-                # print 'substring_register_state[', substring_index,'][', symbol_index,'][', bit_index,']: ', substring_register_state[substring_index][symbol_index][bit_index]
-                # print 'scratch_register_state[', substring_index, '][', symbol_index,'][', bit_index, ']: ', scratch_register_state[substring_index][symbol_index][bit_index]
+                logging.debug('substring_index: ' + str(substring_index) + ' symbol_index: ' + str(symbol_index) + ' bit_index: ' + str(bit_index))
+                logging.debug('substring_register_state[' + str(substring_index) + '][' + str(symbol_index) + '][' + str(bit_index) + ']: ' + str(substring_register_state[substring_index][symbol_index][bit_index]))
+                logging.debug('scratch_register_state[' + str(substring_index) + '][' + str(symbol_index) + '][' + str(bit_index) + ']: ' + str(scratch_register_state[substring_index][symbol_index][bit_index]))
 
                 state_vector = list(kron(substring_register_state[substring_index][symbol_index][bit_index], scratch_register_state[substring_index][symbol_index][bit_index]))
                 new_state_vector = dot(CNOT(), state_vector)
-                # print 'state_vector:', list(state_vector), ' new_state_vector:', list(new_state_vector)
+                logging.debug('state_vector:' + str(list(state_vector)) + ' new_state_vector:' + str(list(new_state_vector)))
                 if (list(state_vector) != list(new_state_vector)):
                     # print 'state_vector ', state_vector, ' != new_state_vector ', new_state_vector
+                    logging.debug('state_vector ' + str(state_vector) + ' != new_state_vector ' + str(new_state_vector))
                     scratch_register_state[substring_index][symbol_index][bit_index] = list(dot(X(), scratch_register_state[substring_index][symbol_index][bit_index]))
-                # else:
+                else:
                     # print 'state_vector ', state_vector, ' == new_state_vector ', new_state_vector
+                    logging.debug('state_vector ' + str(state_vector) + ' == new_state_vector ' + str(new_state_vector))
 
                 # print 'scratch_register_state[', substring_index, '][', symbol_index, '][', bit_index, ']: ', \
                 # scratch_register_state[substring_index][symbol_index][bit_index]
                 # print '==============================='
+                logging.debug('scratch_register_state[' + str(substring_index) + '][' + str(symbol_index) + '][' + str(bit_index) + ']: ' + str(scratch_register_state[substring_index][symbol_index][bit_index]))
+                logging.debug('===============================')
 
     # print 'substring register state: '
     # for i in xrange(N):
@@ -97,6 +102,16 @@ def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_registe
     #     for k in xrange(M):
     #         print scratch_register_state[i][k],
     #     print
+    logging.debug('substring register state: ')
+    for i in xrange(N):
+        for k in xrange(M):
+            logging.debug(str(substring_register_state[i][k]))
+
+    logging.debug('scratch register state: ')
+    for i in xrange(N):
+        for k in xrange(M):
+            logging.debug(str(scratch_register_state[i][k]))
+        logging.debug('\n')
 
     # Mlog(|E|) CNOT operations: control: pattern_register_state as control; target: scratch register (E is read as sigma denoted by Sigma)
     # print '>> Mlog(|E|) CNOT operations on pattern and scratch register'
@@ -175,7 +190,6 @@ def shift_phase_of_t(index_amplitudes, substring_register_state, pattern_registe
     for substring_index in xrange(N):
         # state_vector = scratch_register_state[substring_index][0][symbol_bit_count]
         state_vector = output_register_state[substring_index]
-
         for symbol_index in xrange(M):
             state_vector = kron(scratch_register_state[substring_index][symbol_index][symbol_bit_count], state_vector)
 
@@ -303,69 +317,81 @@ def encode_alphabet_symbols(alphabet):
 
     # return the resulting hash
     return encoding_hash
+
 #============================================================================================================
 # Body
 # NOTE: Encode states in vector format notation.
 # NOTE: Perform computation as matrix operation on vector.
 
 # Configuration 1: For fixed alphabet size, variable text length N, fixed pattern length M.
+logging.basicConfig(filename='config3.log', filemode='w', level=logging.DEBUG)
 
 # Define alphabet
-alphabet = ['a','c','t','g']
-
-# Define binary encoding of alphabet symbols
-# symbol_encoding = {'a':[0,0,0],'c':[1,0,0],'t':[0,1,0],'g':[1,1,0], '-':[0,0,1]}
-symbol_encoding = encode_alphabet_symbols(alphabet)
-
+alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 # Compute for size of alphabet
 alphabet_size = len(alphabet)
-
 # Compute for number of bits required to represent all symbols in alphabet plus an ancilla symbol '-'
-symbol_bit_count = int(log(alphabet_size, 2))+1
+# symbol_bit_count = int(log(alphabet_size, 2))+1
+
+# Define fixed length of text.
+N = 32
+# Compute for maximum number of iterations of Grover's iteration operation.
+iter_count = int(floor((pi / 4) * sqrt(N)))
+# Define fixed length of pattern.
+M = 4
 
 # Define number of iterations per text length, N. e.g. 10
-T_count_per_N = 2
-
-# Define text lengths, N. e.g. 4, 8, 16, 32,
-text_lengths = [pow(2,i) for i in xrange(3,6)]
+TP_count_per_alphabet_size = 5
 
 averages_execution_counts = [] # for recording the averages of executions counts per N
 averages_execution_times = [] # for recording the averages of execution times per N
 
-for N in text_lengths:
-    execution_counts = [] # for recording number of executions before finding a solution for each T of length current N
-    execution_times = [] # for recording timestamps for each unique execution of the algorithm
+for i in xrange(int(floor(alphabet_size / 4))):
 
-    # Compute for maximum number of iterations of Grover's iteration operation.
-    iter_count = int(floor((pi / 4) * sqrt(N)))
+    # Define current alphabet
+    current_alphabet = alphabet[0:(i+1)*4]
+    current_alphabet_size = len(current_alphabet)
 
-    for T_index in xrange(T_count_per_N):
+    # Compute for number of bits required to represent all symbols in alphabet plus an ancilla symbol '-'
+    symbol_bit_count = int(ceil(log(current_alphabet_size, 2))) + 1
+
+    # Define binary encoding of alphabet symbols
+    # symbol_encoding = {'a':[0,0,0],'c':[1,0,0],'t':[0,1,0],'g':[1,1,0], '-':[0,0,1]}
+    symbol_encoding = encode_alphabet_symbols(current_alphabet)
+    logging.debug('symbol_encoding: ')
+    logging.debug(symbol_encoding)
+    logging.debug('current_alphabet: ')
+    logging.debug(current_alphabet)
+
+    execution_counts = []  # for recording number of executions before finding a solution for each T of length current N
+    execution_times = []  # for recording timestamps for each unique execution of the algorithm
+
+    for TP_pair in xrange(TP_count_per_alphabet_size):
 
         # Define text T.
         # Auto-generate text T.
         # N = len(text_lengths[i])
-        index_bit_count = int(log(N, 2))
-        T = generate_random_string(N, alphabet)
-        print 'original T: ', T
+        index_bit_count = int(ceil(log(N, 2)))
+        T = generate_random_string(N, current_alphabet)
+        logging.debug('original T: ' + str(T))
 
         # Define pattern P.
         # Auto-generate pattern P.
-        M = 4
-        P = generate_random_string(M, alphabet)
+        P = generate_random_string(M, current_alphabet)
         list_P = list(P)
-        print 'P:', P
+        logging.debug('P:' + str(P))
 
         # Find and replace all occurrences of P in T with the text '----'
         T = T.replace(P,'----')
 
         # Insert pattern into randomly generated index in T.
         pattern_starting_index = random.choice(N-M+1)
-        print 'pattern_starting_index: ', pattern_starting_index
+        logging.debug('pattern_starting_index: ' + str(pattern_starting_index))
         list_T = list(T)
         for i in xrange(M):
             list_T[pattern_starting_index + i] = P[i]
         T = ''.join(list_T)
-        print 'new T: ', T
+        logging.debug('new T: ' + str(T))
 
         # Pad list representation of T with (M-1)-length filler string
         for i in xrange(M-1):
@@ -377,7 +403,6 @@ for N in text_lengths:
 
         while not solution_found:
 
-            # TODO: Add 1 qubit to accommodate filler symbol -.
             # Initialize index register state
             index_register_state = []
             index_register_state.append(initialize_index_register(index_register_state, index_bit_count))
@@ -386,9 +411,10 @@ for N in text_lengths:
             # Construct array of amplitudes of states in superposition
             index_amplitudes = to_superposition(index_register_state)
 
-            # TODO: Implement simulation of a qRAM.
             # Query substrings from QRAM and encode them into substring register as a superposition of states
             substring_register_state = query_substrings_vectors(T, N, M)
+            # for i in xrange(N):
+            #     print 'substring_register_state[{:d}]: '.format(i), substring_register_state[i]
 
             # pattern_register_state = [[1,0],[0,1]] #= [[[1,0],[0,1]],[[0,1],[1,0]]] in vector form
             pattern_register_state = encode_pattern_vectors(list_P, M, symbol_bit_count)
@@ -396,18 +422,20 @@ for N in text_lengths:
 
             time_lapsed = 0
             for iter in xrange(iter_count):
-                print '\n>> Grover iteration #', (iter + 1)
+                logging.debug('\n>> Grover iteration #' + str(iter + 1))
 
-                print '\n>>>> Marking solution states: '
+                logging.debug('\n>>>> Marking solution states: ')
                 start_time = time.clock()
-                index_amplitudes = shift_phase_of_t(index_amplitudes, substring_register_state, pattern_register_state)
+                index_amplitudes = shift_phase_of_t(index_amplitudes, substring_register_state, pattern_register_state, symbol_bit_count)
                 time_lapsed += (time.clock() - start_time)
                 probabilities = [pow(i, 2) for i in index_amplitudes]
-                print '>>>>>> amplitudes: ', index_amplitudes
-                print '>>>>>> probabilities: ', probabilities
-                print '>>>>>> total probabilities: ', sum(probabilities)
+                logging.debug('>>>>>> amplitudes: ' + str(index_amplitudes))
+                logging.debug('>>>>>> probabilities: ' + str(probabilities))
+                # print '>>>>>> total probabilities: ', sum(probabilities)
+                logging.debug('>>>>>> total probabilities: ' + str(sum(probabilities)))
 
-                print '\n>>>> Amplifying amplitude of solution states '
+
+                logging.debug('\n>>>> Amplifying amplitude of solution states ')
                 # index_register_state = apply_H_adjoint(index_register_state)
                 # index_register_state = shift_phase_of_0(index_register_state)
                 # index_register_state = apply_H_negative(index_register_state)
@@ -418,43 +446,49 @@ for N in text_lengths:
                 # print '>>>>>> amplitudes: ', index_amplitudes
                 # print '>>>>>> probabilities: ', probabilities
                 # print '>>>>>> total probabilities: ', sum(probabilities)
+                logging.debug('>>>>>> amplitudes: ' + str(index_amplitudes))
+                logging.debug('>>>>>> probabilities: ' + str(probabilities))
+                logging.debug('>>>>>> total probabilities: ' + str(sum(probabilities)))
 
-            print '\n>> Measuring state of index register'
+            logging.debug('\n>> Measuring state of index register')
             # Single sampling
             start_time = time.clock()
+            probabilities = [pow(i, 2) for i in index_amplitudes]
+            logging.debug('>>>>>> probabilities: ' + str(probabilities))
+            logging.debug('>>>>>> total probability: ' + str(sum(probabilities)))
             output_index = random.choice(a=N, p=probabilities)
             time_lapsed += (time.clock() - start_time)
-            print 'Output: {:d}'.format(output_index)
+            logging.debug('Output: {:d}'.format(output_index))
 
             execution_times.append(time_lapsed)
 
             if list_T[output_index: output_index + M] == list_P:
                 solution_found = True
-                print 'Substring T[{:d}'.format(output_index), ':{:d}'.format(
-                    output_index + M - 1), '] matches pattern P.'
+                logging.debug('Substring T[{:d}'.format(output_index) + ':{:d}'.format(
+                    output_index + M - 1) + '] matches pattern P.')
             else:
                 try_count += 1
-                print 'Substring T[{:d}'.format(output_index), ':{:d}'.format(
-                    output_index + M - 1), '] does not match pattern P.'
+                logging.debug('Substring T[{:d}'.format(output_index) + ':{:d}'.format(
+                    output_index + M - 1) + '] does not match pattern P.')
 
-        print 'Number of tries: {:d}'.format(try_count)
+        logging.debug('Number of tries: {:d}'.format(try_count))
 
         # Record number of executions of the algorithm until the solution was found.
         execution_counts.append(try_count)
 
-    print '>>>> Execution counts for {:d}:'.format(N), execution_counts
+    logging.debug('>>>> Execution counts for {:d}:'.format(N) + str(execution_counts))
 
     # Compute for average number of execution counts for current N.
-    averages_execution_counts.append(float(sum(execution_counts)) / T_count_per_N)
+    averages_execution_counts.append(float(sum(execution_counts)) / TP_count_per_alphabet_size)
     averages_execution_times.append(float(sum(execution_times)) / sum(execution_counts))
 
-print '\n>> Averages of execution counts for each N:'
-for i in xrange(len(text_lengths)):
-    print '    {:d}:'.format(text_lengths[i]), '{:f} times'.format(averages_execution_counts[i])
+logging.debug('\n>> Averages of execution counts for each alphabet size:')
+for i in xrange(int(floor(alphabet_size / 4))):
+    logging.debug('    {:d}:'.format((i+1)*4) + '{:f} times'.format(averages_execution_counts[i]))
 
-print '\n>> Averages of execution times for each N:'
-for i in xrange(len(text_lengths)):
-    print '    {:d}:'.format(text_lengths[i]), '{:f} seconds'.format(averages_execution_times[i])
+logging.debug('\n>> Averages of execution times for each alphabet size:')
+for i in xrange(int(floor(alphabet_size / 4))):
+    logging.debug('    {:d}:'.format((i+1)*4) + '{:f} seconds'.format(averages_execution_times[i]))
 
 
 

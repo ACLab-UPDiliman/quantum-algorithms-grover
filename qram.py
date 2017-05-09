@@ -8,6 +8,3 @@
 #                University of the Philippines Diliman
 #
 # Description: This python source code implements a simulation of the qRAM model of memory by Giovanetti et al., 2008.
-
-# TODO: Implement storage of substrings in a qRAM.
-# TODO: Implement fetch of data from qRAM using address register and output register.

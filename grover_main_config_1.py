@@ -303,7 +303,6 @@ def encode_alphabet_symbols(alphabet):
 
     # return the resulting hash
     return encoding_hash
-
 #============================================================================================================
 # Body
 # NOTE: Encode states in vector format notation.
@@ -317,7 +316,6 @@ alphabet = ['a','c','t','g']
 # Define binary encoding of alphabet symbols
 # symbol_encoding = {'a':[0,0,0],'c':[1,0,0],'t':[0,1,0],'g':[1,1,0], '-':[0,0,1]}
 symbol_encoding = encode_alphabet_symbols(alphabet)
-print 'symbol encoding: ', symbol_encoding
 
 # Compute for size of alphabet
 alphabet_size = len(alphabet)
@@ -326,23 +324,22 @@ alphabet_size = len(alphabet)
 symbol_bit_count = int(log(alphabet_size, 2))+1
 
 # Define number of iterations per text length, N. e.g. 10
-P_count_per_M = 2
+T_count_per_N = 2
 
 # Define text lengths, N. e.g. 4, 8, 16, 32,
-pattern_lengths = [pow(2,i) for i in xrange(3,5)]
+text_lengths = [pow(2,i) for i in xrange(3,6)]
 
 averages_execution_counts = [] # for recording the averages of executions counts per N
 averages_execution_times = [] # for recording the averages of execution times per N
 
-for M in pattern_lengths:
+for N in text_lengths:
     execution_counts = [] # for recording number of executions before finding a solution for each T of length current N
     execution_times = [] # for recording timestamps for each unique execution of the algorithm
 
     # Compute for maximum number of iterations of Grover's iteration operation.
-    N = 32
     iter_count = int(floor((pi / 4) * sqrt(N)))
 
-    for P_index in xrange(P_count_per_M):
+    for T_index in xrange(T_count_per_N):
 
         # Define text T.
         # Auto-generate text T.
@@ -353,6 +350,7 @@ for M in pattern_lengths:
 
         # Define pattern P.
         # Auto-generate pattern P.
+        M = 4
         P = generate_random_string(M, alphabet)
         list_P = list(P)
         print 'P:', P
@@ -379,7 +377,6 @@ for M in pattern_lengths:
 
         while not solution_found:
 
-            # TODO: Add 1 qubit to accommodate filler symbol -.
             # Initialize index register state
             index_register_state = []
             index_register_state.append(initialize_index_register(index_register_state, index_bit_count))
@@ -388,7 +385,6 @@ for M in pattern_lengths:
             # Construct array of amplitudes of states in superposition
             index_amplitudes = to_superposition(index_register_state)
 
-            # TODO: Implement simulation of a qRAM.
             # Query substrings from QRAM and encode them into substring register as a superposition of states
             substring_register_state = query_substrings_vectors(T, N, M)
 
@@ -416,7 +412,7 @@ for M in pattern_lengths:
                 start_time = time.clock()
                 index_amplitudes = shift_phase_of_superposition(index_amplitudes)
                 time_lapsed += (time.clock() - start_time)
-                # probabilities = [pow(i, 2) for i in index_amplitudes]
+                probabilities = [pow(i, 2) for i in index_amplitudes]
                 # print '>>>>>> amplitudes: ', index_amplitudes
                 # print '>>>>>> probabilities: ', probabilities
                 # print '>>>>>> total probabilities: ', sum(probabilities)
@@ -424,7 +420,6 @@ for M in pattern_lengths:
             print '\n>> Measuring state of index register'
             # Single sampling
             start_time = time.clock()
-            probabilities = [pow(i, 2) for i in index_amplitudes]
             output_index = random.choice(a=N, p=probabilities)
             time_lapsed += (time.clock() - start_time)
             print 'Output: {:d}'.format(output_index)
@@ -445,19 +440,19 @@ for M in pattern_lengths:
         # Record number of executions of the algorithm until the solution was found.
         execution_counts.append(try_count)
 
-    print '>>>> Execution counts for {:d}:'.format(M), execution_counts
+    print '>>>> Execution counts for {:d}:'.format(N), execution_counts
 
     # Compute for average number of execution counts for current N.
-    averages_execution_counts.append(float(sum(execution_counts)) / P_count_per_M)
+    averages_execution_counts.append(float(sum(execution_counts)) / T_count_per_N)
     averages_execution_times.append(float(sum(execution_times)) / sum(execution_counts))
 
 print '\n>> Averages of execution counts for each N:'
-for i in xrange(len(pattern_lengths)):
-    print '    {:d}:'.format(pattern_lengths[i]), '{:f} times'.format(averages_execution_counts[i])
+for i in xrange(len(text_lengths)):
+    print '    {:d}:'.format(text_lengths[i]), '{:f} times'.format(averages_execution_counts[i])
 
 print '\n>> Averages of execution times for each N:'
-for i in xrange(len(pattern_lengths)):
-    print '    {:d}:'.format(pattern_lengths[i]), '{:f} seconds'.format(averages_execution_times[i])
+for i in xrange(len(text_lengths)):
+    print '    {:d}:'.format(text_lengths[i]), '{:f} seconds'.format(averages_execution_times[i])
 
 
 
