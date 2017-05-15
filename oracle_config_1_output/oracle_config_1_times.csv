@@ -1,0 +1,4 @@
+Average oracle execution times per N (in seconds)
+8,0.0337385
+16,0.121212
+32,0.3439315

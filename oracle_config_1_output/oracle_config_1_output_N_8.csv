@@ -1,0 +1,11 @@
+Oracle execution counts for N=8
+T-P instance ID,execution count
+0,1
+1,2
+Average,1.5
+Oracle execution times for N=8
+Execution ID,execution time
+0,0.036372
+1,0.040265
+2,0.042998
+Average,0.0398783333333
